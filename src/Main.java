@@ -2,7 +2,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.stream.JsonReader;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -10,7 +9,6 @@ import org.w3c.dom.NodeList;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.swing.text.DateFormatter;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.awt.*;
@@ -138,7 +136,7 @@ public class Main {
 			return new URL(ASM_URL_FALLBACK).openStream();
 		} else {
 			try {
-				return new URL(ASM_URL_FALLBACK).openStream();
+				return new URL(ASM_URL).openStream();
 			} catch (Exception e) {
 				asmUseFallback = true;
 				return getASMStream();
