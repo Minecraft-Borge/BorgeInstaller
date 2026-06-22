@@ -5,6 +5,7 @@ out/
 !**/src/test/**/out/
 .kotlin
 BorgeInstaller.iml
+libs/
 
 ### Eclipse ###
 .apt_generated
