@@ -26,6 +26,7 @@ import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 
 public class Main {
+	public static final boolean addProfile = false;
 	public static final ClassLoader CLASS_LOADER = Main.class.getClassLoader();
 	public static final String JAR_DOWNLOAD_URL = "https://github.com/Minecraft-Borge/MinecraftBorge-%s-%s/releases/download/%s/minecraftborge-%s-%s.jar";
 
@@ -291,43 +292,45 @@ public class Main {
 		File targetOld = target;
 		long timer;
 		if (isDotMinecraftDir) {
-			System.out.println("Attempting to update launcher profiles...");
-			File launcherProfiles = new File(target.getParentFile(), "launcher_profiles.json");
-			if (launcherProfiles.isFile()) {
-				try {
-					StringBuilder builder = new StringBuilder();
-					Scanner scanner = new Scanner(launcherProfiles);
-					while (scanner.hasNextLine()) {
-						builder.append(scanner.nextLine());
+			if (addProfile) { //this does not work rn
+				System.out.println("Attempting to update launcher profiles...");
+				File launcherProfiles = new File(target.getParentFile(), "launcher_profiles.json");
+				if (launcherProfiles.isFile()) {
+					try {
+						StringBuilder builder = new StringBuilder();
+						Scanner scanner = new Scanner(launcherProfiles);
+						while (scanner.hasNextLine()) {
+							builder.append(scanner.nextLine());
+						}
+						String jsonTxt = builder.toString();
+
+						Gson gson = new GsonBuilder().setPrettyPrinting().create();
+						JsonElement je = gson.fromJson(jsonTxt, JsonElement.class);
+						JsonObject jo = je.getAsJsonObject();
+						JsonObject profiles = jo.get("profiles").getAsJsonObject();
+
+						JsonObject obj = new JsonObject();
+						obj.addProperty("gameDir", targetOld.getParentFile().getAbsolutePath());
+						obj.addProperty("icon", "Furnace_On");
+						obj.addProperty("lastVersionId", "minecraftborge-" + mcversion + "-" + borgeversion);
+						obj.addProperty("name", "minecraftborge-" + mcversion + "-" + borgeversion);
+						obj.addProperty("type", "custom");
+						profiles.add("minecraftborge-" + mcversion + "-" + borgeversion, obj);
+
+						launcherProfiles.delete();
+						launcherProfiles.createNewFile();
+
+						String newJsonText = gson.toJson(je);
+						FileWriter writer = new FileWriter(launcherProfiles);
+						writer.write(newJsonText);
+						writer.close();
+					} catch (Exception e) {
+						System.err.println("Could not update launcher profiles");
+						e.printStackTrace(System.err);
 					}
-					String jsonTxt = builder.toString();
-
-					Gson gson = new GsonBuilder().setPrettyPrinting().create();
-					JsonElement je = gson.fromJson(jsonTxt, JsonElement.class);
-					JsonObject jo = je.getAsJsonObject();
-					JsonObject profiles = jo.get("profiles").getAsJsonObject();
-
-					JsonObject obj = new JsonObject();
-					obj.addProperty("gameDir", targetOld.getParentFile().getAbsolutePath());
-					obj.addProperty("icon", "Furnace_On");
-					obj.addProperty("lastVersionId", "minecraftborge-" + mcversion + "-" + borgeversion);
-					obj.addProperty("name", "minecraftborge-" + mcversion + "-" + borgeversion);
-					obj.addProperty("type", "custom");
-					profiles.add("minecraftborge-" + mcversion + "-" + borgeversion, obj);
-
-					launcherProfiles.delete();
-					launcherProfiles.createNewFile();
-
-					String newJsonText = gson.toJson(je);
-					FileWriter writer = new FileWriter(launcherProfiles);
-					writer.write(newJsonText);
-					writer.close();
-				} catch (Exception e) {
-					System.err.println("Could not update launcher profiles");
-					e.printStackTrace(System.err);
+				} else {
+					System.out.println("Could not locate launcher profiles");
 				}
-			} else {
-				System.out.println("Could not locate launcher profiles");
 			}
 			target = new File(target, "minecraftborge-" + mcversion + "-" + borgeversion + "/");
 			if (!target.isDirectory() && !target.mkdirs()) {
