@@ -183,6 +183,7 @@ public class Main {
 		}
 	}
 
+	private static boolean isDotMinecraftDir = false;
 	private static File target = null;
 
 	private static void help() {
@@ -196,17 +197,31 @@ public class Main {
 			System.out.println("The current target directory is " + target);
 			return;
 		}
-		StringBuilder builder = new StringBuilder();
-		builder.append(args[0]);
-		for (int i = 1; i < args.length; i++) {
-			builder.append(" ").append(args[i]);
+		if (args.length == 1 && args[0].equalsIgnoreCase("%AppData%")) {
+			isDotMinecraftDir = true;
+			target = getAppDir("minecraft");
+			target = new File(target, "versions/");
+			if (!target.isDirectory() && !target.mkdirs()) {
+				System.err.println("The working directory could not be created");
+				target = null;
+				return;
+			}
+		} else {
+			isDotMinecraftDir = false;
+			StringBuilder builder = new StringBuilder();
+			builder.append(args[0]);
+			for (int i = 1; i < args.length; i++) {
+				builder.append(" ").append(args[i]);
+			}
+			File file = new File(builder.toString());
+			if (!file.isDirectory() && !file.mkdirs()) {
+				System.err.println("The working directory could not be created");
+				target = null;
+				return;
+			}
+			target = file;
 		}
-		File file = new File(builder.toString());
-		if (!file.isDirectory() && !file.mkdirs()) {
-			System.err.println("The working directory could not be created");
-			return;
-		}
-		target = file;
+		System.out.println("Set target to: '" + target.getAbsolutePath() + "'");
 	}
 
 	private static void install(final String[] args) {
@@ -231,6 +246,10 @@ public class Main {
 			return;
 		}
 		final boolean server = "server".equals(side);
+
+		if (isDotMinecraftDir && server) {
+			System.err.println("You probably should not install the server in the .minecraft folder!!!");
+		}
 
 		if ("latest".equals(borgeversion)) {
 			System.out.println("Attempting to retrieve versions.xml from website");
@@ -263,7 +282,14 @@ public class Main {
 			borgeversion = latest;
 		}
 
+		File targetOld = target;
 		long timer;
+		if (isDotMinecraftDir) {
+			target = new File(target, "minecraftborge-" + mcversion);
+			if (!target.isDirectory() && !target.mkdirs()) {
+				throw new RuntimeException("The working directory could not be created: " + target.getAbsolutePath());
+			}
+		}
 		try {
 			if (server) {
 				String mcDownload = SERVER_DOWNLOADS.get(mcversion);
@@ -271,7 +297,7 @@ public class Main {
 					System.err.println("No downloads for minecraft server " + mcversion);
 					return;
 				}
-				File mcJar = new File(target, mcversion + ".jar");
+				File mcJar = new File(target, "minecraftborge-" + mcversion + ".jar");
 				if (mcJar.exists()) {
 					System.err.println("Minecraft JAR already exists!");
 					return;
@@ -329,7 +355,7 @@ public class Main {
 					System.err.println("No downloads for minecraft client " + mcversion);
 					return;
 				}
-				File mcJar = new File(target, mcversion + ".jar");
+				File mcJar = new File(target, "minecraftborge-" + mcversion + ".jar");
 				if (mcJar.exists()) {
 					System.err.println("Minecraft JAR already exists!");
 					return;
@@ -392,10 +418,10 @@ public class Main {
 			byte[] pkt = new byte[-Short.MIN_VALUE];
 			int n;
 
-			JarFile mcJar = new JarFile(new File(target, mcversion + ".jar"));
+			JarFile mcJar = new JarFile(new File(target, "minecraftborge-" + mcversion + ".jar"));
 			JarFile asmJar = new JarFile(new File(target, "asm-9.9.jar"));
 			JarFile borgeJar = new JarFile(new File(target, "MinecraftBorge.jar"));
-			File installed = new File(target, mcversion + ".jar_tmp");
+			File installed = new File(target, "minecraftborge-" + mcversion + ".jar_tmp");
 			if (!installed.createNewFile()) throw new IOException("The installation JAR could not be created");
 			InputStream in;
 			JarOutputStream out = new JarOutputStream(Files.newOutputStream(installed.toPath()));
@@ -449,13 +475,64 @@ public class Main {
 			borgeJar.close();
 			out.close();
 
-			File origin = new File(target, mcversion + ".jar");
+			File origin = new File(target, "minecraftborge-" + mcversion + ".jar");
 			origin.delete();
 			installed.renameTo(origin);
+
+			if (!server) {
+				File jsonData = new File(target, "minecraftborge-" + mcversion + ".json");
+				jsonData.createNewFile();
+				try (InputStream stream = CLASS_LOADER.getResourceAsStream("version_json/" + mcversion + ".json");
+				     OutputStream os = Files.newOutputStream(jsonData.toPath())) {
+					while ((n = stream.read(pkt)) != -1) {
+						os.write(pkt, 0, n);
+					}
+				}
+			}
 
 			System.out.println("Done! (" + (System.currentTimeMillis() - timer) + "ms)");
 		} catch (Exception e) {
 			throw new RuntimeException("Failed to install mod loader", e);
 		}
+		target = targetOld;
+	}
+
+	public static File getAppDir(String var0) {
+		String var1 = System.getProperty("user.home", ".");
+		File var2;
+		switch(getOSId()) {
+			case 1:
+			case 2:
+				var2 = new File(var1, '.' + var0 + '/');
+				break;
+			case 3:
+				String var3 = System.getenv("APPDATA");
+				if(var3 != null) {
+					var2 = new File(var3, "." + var0 + '/');
+				} else {
+					var2 = new File(var1, '.' + var0 + '/');
+				}
+				break;
+			case 4:
+				var2 = new File(var1, "Library/Application Support/" + var0);
+				break;
+			default:
+				var2 = new File(var1, var0 + '/');
+		}
+
+		if(!var2.exists() && !var2.mkdirs()) {
+			throw new RuntimeException("The working directory could not be created: " + var2);
+		} else {
+			return var2;
+		}
+	}
+
+	public static int getOSId() {
+		String os = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
+		if (os.contains("win")) return 3;
+		if (os.contains("solaris") || os.contains("sunos")) return 2;
+		if (os.contains("linux") || os.contains("unix")) return 1;
+		if (os.contains("macos") || os.contains("ios")) return 4;
+		return 0;
 	}
 }
