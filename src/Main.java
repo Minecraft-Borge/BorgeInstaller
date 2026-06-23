@@ -24,7 +24,7 @@ import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 
 public class Main {
-	public static final boolean addProfile = false;
+	public static boolean addProfile = false;
 	public static final ClassLoader CLASS_LOADER = Main.class.getClassLoader();
 	public static final String JAR_DOWNLOAD_URL = "https://github.com/Minecraft-Borge/MinecraftBorge-%s-%s/releases/download/%s/minecraftborge-%s-%s.jar";
 
@@ -177,6 +177,9 @@ public class Main {
 			case "help":
 				help();
 				break;
+			case "toggleaddprofile":
+				toggleAddProfile();
+				break;
 			case "target":
 				target(args);
 				break;
@@ -196,6 +199,10 @@ public class Main {
 		System.out.println("'help': Shows this list");
 		System.out.println("'target [dir]': Gets or sets the target installation directory");
 		System.out.println("'install <side> <mcversion> <borgeversion>': Installs the specified Borge version");
+	}
+	private static void toggleAddProfile() {
+		addProfile = !addProfile;
+		System.out.println("Add profile to mc launcher is now " + addProfile);
 	}
 	private static void target(final String[] args) {
 		if (args.length == 0) {
@@ -313,6 +320,8 @@ public class Main {
 						obj.addProperty("lastVersionId", "minecraftborge-" + mcversion + "-" + borgeversion);
 						obj.addProperty("name", "minecraftborge-" + mcversion + "-" + borgeversion);
 						obj.addProperty("type", "custom");
+						obj.addProperty("javaDir", "C:\\\\Program Files\\\\Zulu\\\\zulu-8\\\\bin\\\\javaw.exe");
+						obj.addProperty("javaArgs", "-Xmx4G -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32M");
 						profiles.add("minecraftborge-" + mcversion + "-" + borgeversion, obj);
 
 						launcherProfiles.delete();
