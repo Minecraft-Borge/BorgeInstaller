@@ -351,7 +351,7 @@ public class Main {
 					System.err.println("No downloads for minecraft server " + mcversion);
 					return;
 				}
-				File mcJar = new File(target, "minecraftborge-" + mcversion + ".jar");
+				File mcJar = new File(target, "minecraftborge-" + mcversion + "-" + borgeversion + ".jar");
 				if (mcJar.exists()) {
 					System.err.println("Minecraft JAR already exists!");
 					return;
