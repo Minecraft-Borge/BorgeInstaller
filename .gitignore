@@ -6,6 +6,7 @@ out/
 .kotlin
 BorgeInstaller.iml
 libs/
+gson-2.10.1.jar
 
 ### Eclipse ###
 .apt_generated
