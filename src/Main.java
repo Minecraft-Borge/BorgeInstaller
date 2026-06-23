@@ -26,7 +26,7 @@ import java.util.jar.JarOutputStream;
 public class Main {
 	public static boolean addProfile = false;
 	public static final ClassLoader CLASS_LOADER = Main.class.getClassLoader();
-	public static final String JAR_DOWNLOAD_URL = "https://github.com/Minecraft-Borge/MinecraftBorge-%s-%s/releases/download/%s/minecraftborge-%s-%s.jar";
+	public static final String JAR_DOWNLOAD_URL = "https://github.com/Minecraft-Borge/MinecraftBorge-%s-%s/releases/download/%s/minecraftborge-%s-%s%s.jar";
 
 	public static final String LATEST_URL = "https://minecraftborge.net/files/versions.xml";
 	public static final String LATEST_URL_FALLBACK = "https://minecraft-borge.github.io/files/versions.xml";
@@ -49,7 +49,7 @@ public class Main {
 	}
 
 	public static String formatURL(String mcVersion, String borgeVersion, String side) {
-		return String.format(JAR_DOWNLOAD_URL, mcVersion, side, borgeVersion, mcVersion, borgeVersion);
+		return String.format(JAR_DOWNLOAD_URL, mcVersion, side, borgeVersion, mcVersion, borgeVersion, "server".equalsIgnoreCase(side) ? "_server" : "");
 	}
 
 	private static URL getResource(String path) {
